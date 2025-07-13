@@ -1,29 +1,60 @@
 import express from 'express';
-import dotenv from 'dotenv';
-import { connectDB } from '../config/database.js';
-
-// Load environment variables
-dotenv.config();
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import authRoutes from './routes/auth.routes';
+import userRoutes from './routes/user.routes';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(express.json());
+// Security middleware
+app.use(helmet());
 
-// Sample route
-app.get('/', (req, res) => {
-  res.send('LMS Backend API is running');
+// CORS configuration
+app.use(cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true
+}));
+
+// Logging middleware
+app.use(morgan('combined'));
+
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Server is running',
+        timestamp: new Date().toISOString()
+    });
 });
 
-// Connect to MongoDB and start server
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-}).catch((err) => {
-  console.error('Failed to connect to DB', err);
-  process.exit(1);
+// API routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        message: 'Route not found'
+    });
 });
 
-export default app; 
+// Error handling middleware
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('Error:', err);
+    
+    res.status(err.status || 500).json({
+        success: false,
+        message: err.message || 'Internal server error'
+    });
+});
+
+
+  
+
+export default app;
