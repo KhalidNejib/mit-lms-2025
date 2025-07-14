@@ -25,6 +25,6 @@ router.delete('/:id', requireAdmin, deleteUser);
 
 //Admin, Instructor, or Self can access the following:
 router.get('/:id', checkSelfOrInstructorOrAdmin, getUserById);
-router.put('/:id', checkSelfOrInstructorOrAdmin, updateUser);
+router.patch('/:id', checkSelfOrInstructorOrAdmin, updateUser);
 
 export default router; 

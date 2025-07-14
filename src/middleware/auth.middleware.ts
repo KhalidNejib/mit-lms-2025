@@ -83,25 +83,62 @@ export const requireAdmin = requireRole(['admin']);
 export const requireContentManager = requireRole(['content_manager']);
 export const requireInstructorOrAdmin = requireRole(['instructor', 'admin']);
 export const requireAdminOrContentManager = requireRole(['admin', 'content_manager']);
-// ✅ Allow if user is admin, instructor, or accessing their own profile
-export const checkSelfOrInstructorOrAdmin = (
+
+// admin can acess all roles by using their id
+//instructor can access his data and students by their id
+//students acess only their  info
+export const checkSelfOrInstructorOrAdmin = async (
     req: Request,
     res: Response,
     next: NextFunction
-  ): void => {
+  ): Promise<void> => {
     const user = req.user;
+    const targetUserId = req.params.id;
   
-    if (
-      user?.role === 'admin' ||
-      user?.role === 'instructor' ||
-      user?._id.toString() === req.params.id
-    ) {
+    if (!user) {
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+  
+    const isSelf = user._id.toString() === targetUserId;
+  
+    // Admin can access any user
+    if (user.role === 'admin') {
       return next();
     }
   
+    // Instructors can access themselves or students only
+    if (user.role === 'instructor') {
+      if (isSelf) return next();
+  
+      try {
+        const targetUser = await User.findById(targetUserId);
+        if (targetUser?.role === 'student') {
+          return next();
+        } else {
+           res.status(403).json({
+            success: false,
+            message: 'Instructors can only access their own profile or students',
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching target user:', error);
+        res.status(500).json({
+          success: false,
+          message: 'Server error',
+        });
+      }
+    }
+  
+    // Students can only access their own profile
+    if (user.role === 'student' && isSelf) {
+      return next();
+    }
+  
+    // Everyone else denied
     res.status(403).json({ success: false, message: 'Access denied' });
   };
-
+  
 
 // Optional authentication middleware (doesn't fail if no token)
 export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {

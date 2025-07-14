@@ -22,13 +22,13 @@ const router = Router();
 
 // Public routes
 router.post('/register', validateBody(registerSchema), register);  // → /api/auth/register
-router.get('verifyemail/:token', verifyEmail)
+router.get('/verifyemail/:token', verifyEmail)
 router.post('/login', validateBody(loginSchema), login);        // → /api/auth/login
 
 // Protected routes (require authentication)
 router.get('/me', authenticateToken, getCurrentUser);        // → /api/auth/me
-router.put('/me', authenticateToken, updateCurrentUser);     // → /api/auth/me
-router.post('/change-password', authenticateToken,validateBody(changePasswordSchema), changePassword); // → /api/auth/change-password
+router.patch('/me', authenticateToken, updateCurrentUser);     // → /api/auth/me
+router.patch('/change-password', authenticateToken,validateBody(changePasswordSchema), changePassword); // → /api/auth/change-password
 router.post('/refresh-token', refreshToken);
 router.post('/logout', authenticateToken, logout);           // → /api/auth/logout
 router.post('/forgot-password', forgotPassword);

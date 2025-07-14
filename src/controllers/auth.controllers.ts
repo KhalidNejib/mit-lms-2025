@@ -30,7 +30,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     //generate a verification token
     const rawToken = crypto.randomBytes(32).toString('hex');
     const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
-
+  
+    
     user.emailVerificationToken = hashedToken;
     user.emailVerificationExpires = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
 

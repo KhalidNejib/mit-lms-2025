@@ -37,13 +37,24 @@ export const resetPasswordSchema = Joi.object({
 
 
 
+
+
 export const registerSchema = Joi.object({
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
   email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
+  password: Joi.string()
+    .min(8)
+    .pattern(/^(?=.*[A-Z])(?=.*[@$!%*?&]).{8,}$/)
+    .required()
+    .messages({
+      'string.min': 'Password must be at least 8 characters long',
+      'string.pattern.base': 'Password must contain at least one uppercase letter and one special character',
+      'any.required': 'Password is required',
+    }),
   role: Joi.string().valid('student', 'instructor', 'admin', 'content_manager').optional()
 });
+
 
 export const loginSchema = Joi.object({
   email: Joi.string().email().required(),
@@ -52,6 +63,13 @@ export const loginSchema = Joi.object({
 
 export const changePasswordSchema = Joi.object({
   currentPassword: Joi.string().required(),
-  newPassword: Joi.string().min(6).required()
+  newPassword: Joi.string()
+    .min(8)
+    .pattern(/^(?=.*[A-Z])(?=.*[@$!%*?&]).{8,}$/)
+    .required()
+    .messages({
+      'string.min': 'New password must be at least 8 characters long',
+      'string.pattern.base': 'New password must contain at least one uppercase letter and one special character',
+      'any.required': 'New password is required',
+    }),
 });
-
