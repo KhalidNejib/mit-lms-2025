@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import '../models/user.model'; // <-- Ensure User model is registered
+import './user.model'; // <-- Ensure User model is registered
 
 export interface ICourse extends Document {
   title: string;
