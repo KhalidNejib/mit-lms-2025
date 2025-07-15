@@ -114,39 +114,65 @@ export const getContentById = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-//=============put==========================
+
+
+   
+
+//=========================file upload for new contents=======================
 export const updateContent = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-   
-    const userId = req.user?._id;
-
-    const updatedFields = {
-      ...req.body,
-      updatedAt: Date.now(),
-      updatedBy: userId || undefined
-    };
-
-    const updatedContent = await Content.findOneAndUpdate(
-      { _id: id, isDeleted: false },
-      updatedFields,
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedContent) {
-      return res.status(404).json({ message: "Content not found or deleted" });
+    const existingContent = await Content.findById(id);
+    if (!existingContent || existingContent.isDeleted) {
+      return res.status(404).json({ message: 'Content not found or deleted' });
     }
 
-    res.json({
-      message: "Content updated successfully",
+    const {
+      title,
+      slug,
+      type,
+      content,
+      accessLevel,
+      status,
+      tags,
+      courseId,
+      moduleId
+    } = req.body;
+
+    // Update base fields
+    existingContent.title = title ?? existingContent.title;
+    existingContent.slug = slug ?? existingContent.slug;
+    existingContent.type = type ?? existingContent.type;
+    existingContent.content = content ? JSON.parse(content) : existingContent.content;
+    existingContent.accessLevel = accessLevel ?? existingContent.accessLevel;
+    existingContent.status = status ?? existingContent.status;
+    existingContent.tags = tags ? JSON.parse(tags) : existingContent.tags;
+    existingContent.courseId = courseId ?? existingContent.courseId;
+    existingContent.moduleId = moduleId ?? existingContent.moduleId;
+    existingContent.updatedAt = new Date();
+
+    // Replace file if new one is uploaded
+    if (req.file) {
+      existingContent.metadata = {
+        ...existingContent.metadata,
+        fileUrl: useS3
+          ? (req.file as any).location
+          : `/uploads/${req.file.filename}`,
+        fileType: req.file.mimetype,
+        fileSize: req.file.size,
+        originalName: req.file.originalname
+      };
+    }
+
+    const updatedContent = await existingContent.save();
+
+    res.status(200).json({
+      message: 'Content updated successfully',
       content: updatedContent
     });
   } catch (error: any) {
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ message: 'Validation error', details: error.errors });
-    }
+    console.error(error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-
