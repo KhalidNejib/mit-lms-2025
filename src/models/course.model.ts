@@ -1,6 +1,7 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
+import '../models/user.model'; // <-- Ensure User model is registered
 
-export interface ICourse extends mongoose.Document {
+export interface ICourse extends Document {
   title: string;
   slug: string;
   description: string;
@@ -11,13 +12,13 @@ export interface ICourse extends mongoose.Document {
   subcategory?: string;
   level?: 'beginner' | 'intermediate' | 'advanced';
   language?: string;
-  pricing?: {
+  pricing: {
     type: 'free' | 'paid' | 'subscription';
-    amount: number;
-    currency: string;
+    amount?: number;
+    currency?: string;
     discount?: {
-      percentage: number;
-      validUntil: Date;
+      percentage?: number;
+      validUntil?: Date;
     };
   };
   duration?: number;
@@ -28,21 +29,21 @@ export interface ICourse extends mongoose.Document {
   status?: 'draft' | 'published' | 'archived';
   featured?: boolean;
   rating?: {
-    average: number;
-    count: number;
+    average?: number;
+    count?: number;
   };
   enrollmentCount?: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-const courseSchema = new mongoose.Schema<ICourse>({
+const courseSchema = new Schema<ICourse>({
   title: { type: String, required: true },
   slug: { type: String, required: true, unique: true },
   description: { type: String, required: true },
   shortDescription: { type: String },
   thumbnail: { type: String },
-  instructor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  instructor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   category: { type: String, required: true },
   subcategory: { type: String },
   level: { type: String, enum: ['beginner', 'intermediate', 'advanced'] },
@@ -50,7 +51,8 @@ const courseSchema = new mongoose.Schema<ICourse>({
   pricing: {
     type: {
       type: String,
-      enum: ['free', 'paid', 'subscription']
+      enum: ['free', 'paid', 'subscription'],
+      required: true
     },
     amount: { type: Number, default: 0 },
     currency: { type: String, default: 'USD' },
@@ -59,8 +61,8 @@ const courseSchema = new mongoose.Schema<ICourse>({
       validUntil: Date
     }
   },
-  duration: { type: Number },
-  modules: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Module' }],
+  duration: { type: Number }, // in minutes
+  modules: [{ type: Schema.Types.ObjectId, ref: 'Module' }],
   tags: [{ type: String }],
   prerequisites: [{ type: String }],
   learningOutcomes: [{ type: String }],

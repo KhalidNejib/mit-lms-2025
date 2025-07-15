@@ -1,29 +1,14 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import { connectDB } from '../config/database.js';
-
-// Load environment variables
-dotenv.config();
+import express, { Request, Response, NextFunction } from 'express';
+import courseRoutes from './routes/course.routes';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-// Middleware
 app.use(express.json());
+app.use('/api/courses', courseRoutes);
 
-// Sample route
-app.get('/', (req, res) => {
-  res.send('LMS Backend API is running');
+// Error handler
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  res.status(500).json({ message: err.message || 'Internal Server Error' });
 });
 
-// Connect to MongoDB and start server
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-}).catch((err) => {
-  console.error('Failed to connect to DB', err);
-  process.exit(1);
-});
-
-export default app; 
+export default app;
