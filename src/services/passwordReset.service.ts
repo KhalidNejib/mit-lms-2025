@@ -1,13 +1,15 @@
-import crypto from 'crypto';
-import {User ,IUser} from "../models/User.model"
-import { sendPasswordResetEmail } from './email.service';
+import crypto from "crypto";
+import { User, IUser } from "../models/user.model";
+import { sendPasswordResetEmail } from "./email.service";
 
 // Track reset attempts per email
 const resetAttempts = new Map<string, { count: number; lastAttempt: number }>();
 const MAX_ATTEMPTS = 3;
 const ATTEMPT_WINDOW = 3600000; // 1 hour in milliseconds
 
-export const generateResetToken = async (email: string): Promise<{ success: boolean; token?: string }> => {
+export const generateResetToken = async (
+  email: string
+): Promise<{ success: boolean; token?: string }> => {
   try {
     // Check attempt limits
     const attempts = resetAttempts.get(email) || { count: 0, lastAttempt: 0 };
@@ -26,7 +28,7 @@ export const generateResetToken = async (email: string): Promise<{ success: bool
     // Update attempts
     resetAttempts.set(email, {
       count: attempts.count + 1,
-      lastAttempt: now
+      lastAttempt: now,
     });
 
     const user = await User.findOne({ email });
@@ -35,29 +37,28 @@ export const generateResetToken = async (email: string): Promise<{ success: bool
     }
 
     // Generate reset token
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
     // Set token and expiration (1 hour from now)
     user.resetPasswordToken = crypto
-      .createHash('sha256')
+      .createHash("sha256")
       .update(resetToken)
-      .digest('hex');
+      .digest("hex");
     user.resetPasswordExpires = new Date(Date.now() + ATTEMPT_WINDOW);
 
     await user.save();
 
     // Send email with reset token
     const emailSent = await sendPasswordResetEmail(email, resetToken);
-    
+
     if (!emailSent) {
-      console.error('Failed to send password reset email');
+      console.error("Failed to send password reset email");
       return { success: true, token: resetToken }; // Keep returning token for testing
     }
 
     return { success: true, token: resetToken }; // Keep returning token for testing
-
   } catch (error) {
-    console.error('Error generating reset token:', error);
+    console.error("Error generating reset token:", error);
     return { success: false };
   }
 };
@@ -67,10 +68,7 @@ export const validateResetToken = async (
   newPassword: string
 ): Promise<boolean> => {
   try {
-    const hashedToken = crypto
-      .createHash('sha256')
-      .update(token)
-      .digest('hex');
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
     const user = await User.findOne({
       resetPasswordToken: hashedToken,
@@ -83,7 +81,7 @@ export const validateResetToken = async (
 
     // Update password and clear reset token fields
     user.password = newPassword;
-    user.resetPasswordToken = '';
+    user.resetPasswordToken = "";
     user.resetPasswordExpires = new Date(0);
 
     await user.save();
@@ -93,7 +91,7 @@ export const validateResetToken = async (
 
     return true;
   } catch (error) {
-    console.error('Error validating reset token:', error);
+    console.error("Error validating reset token:", error);
     return false;
   }
 };
