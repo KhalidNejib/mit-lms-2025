@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
+import contentRoutes from './routes/content.routes'
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/content',contentRoutes)
 
 // 404 handler
 app.use((req, res) => {
