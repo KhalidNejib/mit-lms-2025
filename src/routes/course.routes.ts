@@ -5,3 +5,6 @@ const router = Router();
 
 router.get('/', courseController.getAllCourses);
 router.get('/:id', courseController.getCourseById);
+router.post('/:id/enroll', courseController.enrollInCourse);
+router.get('/:id/progress', courseController.getUserProgress);
+router.post('/:id/review', courseController.addCourseReview);
