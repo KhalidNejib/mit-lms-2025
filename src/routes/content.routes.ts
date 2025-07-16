@@ -6,6 +6,8 @@ import {
   getAllContent,
   getContentById,
   updateContent,
+  getContentBySlug,
+  getMediaContent
  
 } from '../controllers/content.controller';
 import {authenticateToken} from '../middleware/auth.middleware'
@@ -21,6 +23,10 @@ router.post('/',authenticateToken, createContent);
 router.get('/', getAllContent);
 
 router.get('/:id', getContentById);
+
+router.get('/media', getMediaContent);
+
+router.get('/slug/:slug', getContentById);
 
 
 

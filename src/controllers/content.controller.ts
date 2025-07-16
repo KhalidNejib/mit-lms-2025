@@ -176,3 +176,37 @@ export const updateContent = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+// Get content by slug
+export const getContentBySlug = async (req: Request, res: Response) => {
+  try {
+    const { slug } = req.params;
+    const content = await Content.findOne({ slug, isDeleted: false })
+      .populate("author", "firstName lastName email role")
+      .populate("courseId", "title")
+      .populate("moduleId", "title");
+    if (!content) {
+      return res.status(404).json({ message: "Content not found" });
+    }
+    res.json({ content });
+  } catch (error: any) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get all media content
+export const getMediaContent = async (req: Request, res: Response) => {
+  try {
+    // Adjust the filter as needed for your media types
+    const mediaTypes = ["video", "pdf", "image"];
+    const contents = await Content.find({
+      type: { $in: mediaTypes },
+      isDeleted: false,
+    })
+      .populate("author", "firstName lastName email role")
+      .sort({ createdAt: -1 });
+    res.json({ total: contents.length, contents });
+  } catch (error: any) {
+    res.status(500).json({ message: "Failed to fetch media content", error: error.message });
+  }
+};
