@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import Content from '../models/content.model';
+  import Content from '../models/content.model';
 import mongoose from 'mongoose';
 import { UploadService } from '../services/upload.service';
 
