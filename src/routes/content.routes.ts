@@ -1,37 +1,31 @@
-import express from 'express';
+import { Router } from 'express';
 import {
-  createContent,
-  deleteContent,
- 
   getAllContent,
   getContentById,
-  updateContent,
   getContentBySlug,
-  getMediaContent
- 
+  createContent,
+  updateContent,
+  deleteContent,
+  uploadMedia,
+  getMediaLibrary
 } from '../controllers/content.controller';
-import {authenticateToken} from '../middleware/auth.middleware'
-import {upload} from '../middleware/upload.middleware'
+import { authenticateToken } from '../middleware/auth.middleware';
+import { upload } from '../middleware/upload.middleware';
 
+const router = Router();
 
-const router = express.Router();
-
-
-router.post('/',authenticateToken, createContent);
-
-
+// Public Routes
 router.get('/', getAllContent);
-
 router.get('/:id', getContentById);
+router.get('/slug/:slug', getContentBySlug);
+router.get('/media', getMediaLibrary);
 
-router.get('/media', getMediaContent);
-
-router.get('/slug/:slug', getContentById);
-
-
-
-
-router.delete('/:id', authenticateToken,deleteContent);
+// Protected Routes
+router.post('/', authenticateToken, createContent);
 router.put('/:id', authenticateToken, upload.single('file'), updateContent);
+router.delete('/:id', authenticateToken, deleteContent);
+
+// Media Upload (Protected)
+router.post('/upload', authenticateToken, upload.array('media', 10), uploadMedia);
 
 export default router;
