@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Content from '../models/content.model';
 import mongoose from 'mongoose';
+import { UploadService } from '../services/upload.service';
 
 // Get all content items
 export const getAllContent = async (req: Request, res: Response) => {
@@ -72,7 +73,7 @@ export const uploadMedia = async (req: Request, res: Response) => {
     return res.status(400).json({ success: false, message: 'No files uploaded' });
   }
   const files = req.files as Express.Multer.File[];
-  const filePaths = files.map(file => `/uploads/${file.filename}`);
+  const filePaths = files.map(file => UploadService.getFilePath(file.filename));
   res.json({ success: true, files: filePaths });
 };
 
