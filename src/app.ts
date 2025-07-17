@@ -41,6 +41,10 @@ app.use('/api/users', userRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/payments', paymentRoutes);
 
+// Course endpoints
+app.get('/api/courses', getAllCourses);
+app.get('/api/courses/:id', getCourseById);
+
 // 404 handler
 app.use((req, res) => {
     res.status(404).json({
@@ -52,14 +56,11 @@ app.use((req, res) => {
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error('Error:', err);
-    
+
     res.status(err.status || 500).json({
         success: false,
         message: err.message || 'Internal server error'
     });
 });
-
-
-  
 
 export default app;

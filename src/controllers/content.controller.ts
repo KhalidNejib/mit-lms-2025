@@ -1,69 +1,41 @@
 import { Request, Response } from 'express';
-  import Content from '../models/content.model';
-import mongoose from 'mongoose';
+import { Content } from '../models/content.model';
 import { UploadService } from '../services/upload.service';
-
-// Get all content items
-export const getAllContent = async (req: Request, res: Response) => {
-  try {
-    const contents = await Content.find();
-    res.json({ success: true, data: contents });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to fetch content', error: err });
-  }
-};
-
-// Get content by slug
-export const getContentBySlug = async (req: Request, res: Response) => {
-  try {
-    const { slug } = req.params;
-    const content = await Content.findOne({ slug });
-    if (!content) {
-      return res.status(404).json({ success: false, message: 'Content not found' });
-    }
-    res.json({ success: true, data: content });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to fetch content', error: err });
-  }
-};
 
 // Create new content
 export const createContent = async (req: Request, res: Response) => {
   try {
-    const { title, slug, body, author, media, status } = req.body;
-    const newContent = new Content({ title, slug, body, author, media, status });
+    const userId = req.user?._id;
+
+    const contentData = {
+      ...req.body,
+      author: userId
+    };
+
+    const newContent = new Content(contentData);
     await newContent.save();
-    res.status(201).json({ success: true, data: newContent });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to create content', error: err });
-  }
-};
 
-// Update content
-export const updateContent = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const updated = await Content.findByIdAndUpdate(id, req.body, { new: true });
-    if (!updated) {
-      return res.status(404).json({ success: false, message: 'Content not found' });
+    res.status(201).json({
+      message: 'New content created successfully',
+      content: newContent
+    });
+  } catch (error: any) {
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        message: 'Validation error',
+        details: error.errors
+      });
     }
-    res.json({ success: true, data: updated });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to update content', error: err });
-  }
-};
-
-// Delete content
-export const deleteContent = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const deleted = await Content.findByIdAndDelete(id);
-    if (!deleted) {
-      return res.status(404).json({ success: false, message: 'Content not found' });
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: 'Duplicate field value',
+        details: error.keyValue
+      });
     }
-    res.json({ success: true, message: 'Content deleted' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to delete content', error: err });
+    res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
   }
 };
 
@@ -77,8 +49,33 @@ export const uploadMedia = async (req: Request, res: Response) => {
   res.json({ success: true, files: filePaths });
 };
 
-// Get media library (placeholder)
-export const getMediaLibrary = async (req: Request, res: Response) => {
-  // Placeholder logic
-  res.json({ success: true, data: [] });
-}; 
+// Get all content (with filtering, population, and sorting)
+export const getAllContent = async (req: Request, res: Response) => {
+  try {
+    const { status, type, author, courseId, accessLevel } = req.query as {
+      status?: string;
+      type?: string;
+      author?: string;
+      courseId?: string;
+      accessLevel?: string;
+    };
+
+    const filter: any = {
+      isDeleted: false
+    };
+
+    if (status) filter.status = status;
+    if (type) filter.type = type;
+    if (author) filter.author = author;
+    if (courseId) filter.courseId = courseId;
+    if (accessLevel) filter.accessLevel = accessLevel;
+
+    const contents = await Content.find(filter)
+      .populate('author', 'firstName lastName email role')
+      .sort({ createdAt: -1 });
+
+    res.json({ total: contents.length, contents });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
