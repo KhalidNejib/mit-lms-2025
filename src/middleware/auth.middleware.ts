@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { User, IUser } from '../models/User.model';
+import { User, IUser } from '../models/user.model';
 import {config} from "../config/enviroment"
 
 // Extend Request interface to include user
@@ -22,7 +22,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
         if (!token) {
-            return res.status(401).json({ 
+            return res.status(401).json({
                 success: false, 
                 message: 'Access token required' 
             });

@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import {User ,IUser} from "../models/User.model"
+import {User ,IUser} from "../models/user.model"
 import { sendPasswordResetEmail } from './email.service';
 
 // Track reset attempts per email

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { User, IUser} from '../models/User.model'
+import { User, IUser} from '../models/user.model'
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { forgotPasswordSchema, resetPasswordSchema } from '../utils/validator';
 import { generateResetToken, validateResetToken } from '../services/passwordReset.service';

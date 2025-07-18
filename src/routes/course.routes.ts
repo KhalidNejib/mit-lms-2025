@@ -1,13 +1,26 @@
-import { Router } from 'express';
-import { getAllCourses, getCourseById, deleteCourse } from '../controllers/course.controller';
+import express from 'express';
+import * as courseController from '../controllers/course.controller';
+import {
+  authenticateToken,
+  optionalAuth,
+  requireInstructorOrAdmin,
+} from '../middleware/auth.middleware';
 
-const router = Router();
+const router = express.Router();
 
-router.get('/', getAllCourses); 
-router.get('/:id', getCourseById);
-router.delete('/:id', deleteCourse)
+// ✅ Public: get all courses (users don't need to be logged in)
+router.get('/', optionalAuth, courseController.getAllCourses);
+
+// ✅ Public: get a specific course
+router.get('/:id', optionalAuth, courseController.getCourseById);
+
+// // 🔐 Protected: only instructors or admins can create a course
+// router.post('/', authenticateToken, requireInstructorOrAdmin, courseController.createCourse);
+
+// // 🔐 Protected: only instructors (own course) or admin can update
+// router.put('/:id', authenticateToken, courseController.updateCourse);
+
+// 🔐 Protected: only instructors (own course) or admin can delete
+router.delete('/:id', authenticateToken, courseController.deleteCourse);
 
 export default router;
-
-
-

@@ -1,4 +1,4 @@
- // src/controllers/course.controller.ts
+// src/controllers/course.controller.ts
 
 import { Request, Response, NextFunction } from 'express';
 import courseService from '../services/course.service';
@@ -37,3 +37,40 @@ export const deleteCourse = async(req:Request, res:Response, next:NextFunction) 
     next(error)
   }
 }
+
+// Enroll a user in a course
+export const enrollInCourse = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!._id.toString(); // Authenticated user
+    const courseId = req.params.id; // Course ID from URL
+    const enrollment = await courseService.enrollInCourse(userId, courseId);
+    res.status(201).json(enrollment);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get a user's progress in a course
+export const getUserProgress = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!._id.toString(); // Authenticated user
+    const courseId = req.params.id;
+    const progress = await courseService.getUserProgress(userId, courseId);
+    res.json(progress);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Add a review to a course
+export const addCourseReview = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!._id.toString(); // Authenticated user
+    const courseId = req.params.id;
+    const { rating, comment } = req.body;
+    const review = await courseService.addCourseReview(userId, courseId, { rating, comment });
+    res.status(201).json(review);
+  } catch (error) {
+    next(error);
+  }
+};

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { User} from '../models/User.model';
+import { User} from '../models/user.model';
 
 // Get all users (Admin only)
 export const getAllUsers = async (req: Request, res: Response) => {
