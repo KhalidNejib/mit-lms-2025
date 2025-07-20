@@ -3,9 +3,10 @@ import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
 import { Request } from 'express';
 import fs from 'fs';
+import crypto from 'crypto'; // for better filename randomness
 
 // Ensure uploads directory exists
-const uploadDir = path.join(__dirname, '../../uploads');
+const uploadDir = path.resolve(__dirname, '../../uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -17,7 +18,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    const uniqueName = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`;
     cb(null, uniqueName);
   }
 });

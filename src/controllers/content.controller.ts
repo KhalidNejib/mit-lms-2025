@@ -1,62 +1,95 @@
-import { Request, Response } from 'express';
-import { Content } from '../models/content.model';
+import { Request, Response, NextFunction } from 'express';
+import * as contentService from '../services/content.service';
 
-// Create new content
-export const createContent = async (req: Request, res: Response) => {
+// GET /api/content
+export const getAllContent = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = req.user?._id;
-
-    const contentData = {
-      ...req.body,
-      author: userId
-    };
-
-    const newContent = new Content(contentData);
-    await newContent.save();
-
-    res.status(201).json({
-      message: 'New content created successfully',
-      content: newContent
-    });
-  } catch (error: any) {
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({
-        message: 'Validation error',
-        details: error.errors
-      });
-    }
-    if (error.code === 11000) {
-      return res.status(400).json({
-        message: 'Duplicate field value',
-        details: error.keyValue
-      });
-    }
-    res.status(500).json({
-      message: 'Server error',
-      error: error.message
-    });
+    const filters = req.query;
+    const contents = await contentService.getAllContent(filters);
+    res.json({ total: contents.length, contents });
+  } catch (error) {
+    next(error);
   }
 };
 
-// Get all content
-export const getAllContent = async (req: Request, res: Response) => {
+// GET /api/content/:slug
+export const getContentBySlug = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { status, type, author, courseId, accessLevel } = req.query;
+    const slug = req.params.slug;
+    const content = await contentService.getContentBySlug(slug);
+    if (!content) {
+      return res.status(404).json({ message: 'Content not found' });
+    }
+    res.json(content);
+  } catch (error) {
+    next(error);
+  }
+};
 
-    const filter: any = {
-      isDeleted: false
-    };
+// POST /api/content
+export const createContent = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?._id;
+    const data = { ...req.body, author: userId };
+    const newContent = await contentService.createContent(data);
+    res.status(201).json(newContent);
+  } catch (error) {
+    next(error);
+  }
+};
 
-    if (status) filter.status = status;
-    if (type) filter.type = type;
-    if (author) filter.author = author;
-    if (courseId) filter.courseId = courseId;
-    if (accessLevel) filter.accessLevel = accessLevel;
+// PUT /api/content/:id
+export const updateContent = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const updated = await contentService.updateContent(req.params.id, req.body);
+    if (!updated) {
+      return res.status(404).json({ message: 'Content not found' });
+    }
+    res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+};
 
-    const contents = await Content.find(filter)
-      .populate('author', 'firstName lastName email role')
-      .sort({ createdAt: -1 });
+// DELETE /api/content/:id
+export const deleteContent = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const deleted = await contentService.deleteContent(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: 'Content not found' });
+    }
+    res.json({ message: 'Content deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
 
-    res.json({ total: contents.length, contents });
-  } catch (error: any) {
-    res.status(500).json
+// POST /api/content/upload (media upload)
+import { RequestHandler } from 'express';
+import { upload } from '../middlewares/upload.middleware';
+
+export const uploadMedia: RequestHandler = (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+  // Return the uploaded file info (or save reference if you want)
+  res.status(201).json({
+    message: 'File uploaded successfully',
+    file: {
+      filename: req.file.filename,
+      path: req.file.path,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+    },
+  });
+};
+
+// GET /api/content/media (media library)
+export const getMediaLibrary = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const mediaItems = await contentService.getMediaLibrary();
+    res.json({ total: mediaItems.length, media: mediaItems });
+  } catch (error) {
+    next(error);
+  }
+};

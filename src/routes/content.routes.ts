@@ -1,31 +1,21 @@
 import { Router } from 'express';
-import {
-  getAllContent,
-  getContentById,
-  getContentBySlug,
-  createContent,
-  updateContent,
-  deleteContent,
-  uploadMedia,
-  getMediaLibrary
-} from '../controllers/content.controller';
-import { authenticateToken } from '../middleware/auth.middleware';
+import * as contentController from '../controllers/content.controller';
+import { authenticateToken, requireInstructorOrAdmin } from '../middleware/auth.middleware';
 import { upload } from '../middleware/upload.middleware';
 
 const router = Router();
 
-// Public Routes
-router.get('/', getAllContent);
-router.get('/:id', getContentById);
-router.get('/slug/:slug', getContentBySlug);
-router.get('/media', getMediaLibrary);
+// Public routes
+router.get('/', contentController.getAllContent);
+router.get('/media', contentController.getMediaLibrary);
+router.get('/:slug', contentController.getContentBySlug);
 
-// Protected Routes
-router.post('/', authenticateToken, createContent);
-router.put('/:id', authenticateToken, upload.single('file'), updateContent);
-router.delete('/:id', authenticateToken, deleteContent);
+// Protected routes (Instructor/Admin required)
+router.post('/', authenticateToken, requireInstructorOrAdmin, contentController.createContent);
+router.put('/:id', authenticateToken, requireInstructorOrAdmin, contentController.updateContent);
+router.delete('/:id', authenticateToken, requireInstructorOrAdmin, contentController.deleteContent);
 
-// Media Upload (Protected)
-router.post('/upload', authenticateToken, upload.array('media', 10), uploadMedia);
+// Upload media file
+router.post('/upload', authenticateToken, requireInstructorOrAdmin, upload.single('file'), contentController.uploadMedia);
 
 export default router;

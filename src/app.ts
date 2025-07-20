@@ -2,9 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+
+import courseRoutes from './routes/course.routes';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import contentRoutes from './routes/content.routes';
+
 import { getAllCourses, getCourseById } from './controllers/course.controller';
 
 const app = express();
@@ -14,8 +17,8 @@ app.use(helmet());
 
 // CORS configuration
 app.use(cors({
-    origin: process.env.FRONTEND_URL,
-    credentials: true
+  origin: process.env.FRONTEND_URL,
+  credentials: true
 }));
 
 // Logging middleware
@@ -27,38 +30,38 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-    res.json({
-        success: true,
-        message: 'Server is running',
-        timestamp: new Date().toISOString()
-    });
+  res.json({
+    success: true,
+    message: 'Server is running',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/courses', courseRoutes);
 app.use('/api/content', contentRoutes);
 
-// Course endpoints
+// Course endpoints (example GET without router)
 app.get('/api/courses', getAllCourses);
 app.get('/api/courses/:id', getCourseById);
 
 // 404 handler
 app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        message: 'Route not found'
-    });
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
 });
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.error('Error:', err);
-
-    res.status(err.status || 500).json({
-        success: false,
-        message: err.message || 'Internal server error'
-    });
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal server error'
+  });
 });
 
 export default app;
