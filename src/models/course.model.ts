@@ -1,5 +1,4 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import './user.model' // <-- Ensure User model is registered
 
 export interface ICourse extends Document {
   title: string;
@@ -21,8 +20,8 @@ export interface ICourse extends Document {
       validUntil?: Date;
     };
   };
-  duration?: number;
-  modules?: mongoose.Types.ObjectId[];
+  duration?: number; // in minutes
+  modules?: mongoose.Types.ObjectId[]; // refs to Module documents
   tags?: string[];
   prerequisites?: string[];
   learningOutcomes?: string[];
@@ -52,14 +51,14 @@ const courseSchema = new Schema<ICourse>({
     type: {
       type: String,
       enum: ['free', 'paid', 'subscription'],
-      required: true
+      required: true,
     },
     amount: { type: Number, default: 0 },
     currency: { type: String, default: 'USD' },
     discount: {
       percentage: Number,
-      validUntil: Date
-    }
+      validUntil: Date,
+    },
   },
   duration: { type: Number }, // in minutes
   modules: [{ type: Schema.Types.ObjectId, ref: 'Module' }],
@@ -69,16 +68,22 @@ const courseSchema = new Schema<ICourse>({
   status: {
     type: String,
     enum: ['draft', 'published', 'archived'],
-    default: 'draft'
+    default: 'draft',
   },
   featured: { type: Boolean, default: false },
   rating: {
     average: { type: Number, default: 0 },
-    count: { type: Number, default: 0 }
+    count: { type: Number, default: 0 },
   },
   enrollmentCount: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
+});
+
+// Pre-save hook to update updatedAt
+courseSchema.pre('save', function (next) {
+  this.updatedAt = new Date();
+  next();
 });
 
 export default mongoose.model<ICourse>('Course', courseSchema);

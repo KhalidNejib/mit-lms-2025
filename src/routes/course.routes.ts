@@ -2,25 +2,42 @@ import express from 'express';
 import * as courseController from '../controllers/course.controller';
 import {
   authenticateToken,
-  optionalAuth,
+  requireInstructor,
+  requireAdmin,
   requireInstructorOrAdmin,
+  optionalAuth
 } from '../middleware/auth.middleware';
 
 const router = express.Router();
 
-// ✅ Public: get all courses (users don't need to be logged in)
+// 📚 Public: Get all published courses (with optional filters)
 router.get('/', optionalAuth, courseController.getAllCourses);
 
-// ✅ Public: get a specific course
+// 📚 Public/Optional auth: Get specific course details
 router.get('/:id', optionalAuth, courseController.getCourseById);
 
-// // 🔐 Protected: only instructors or admins can create a course
-// router.post('/', authenticateToken, requireInstructorOrAdmin, courseController.createCourse);
+// 🛠️ Instructor/Admin: Create new course
+router.post('/', authenticateToken, requireInstructorOrAdmin, courseController.createCourse);
 
-// // 🔐 Protected: only instructors (own course) or admin can update
-// router.put('/:id', authenticateToken, courseController.updateCourse);
+// 🛠️ Instructor/Admin: Update course
+router.put('/:id', authenticateToken, requireInstructorOrAdmin, courseController.updateCourse);
 
-// 🔐 Protected: only instructors (own course) or admin can delete
-router.delete('/:id', authenticateToken, courseController.deleteCourse);
+// ❌ Instructor/Admin: Delete course
+router.delete('/:id', authenticateToken, requireInstructorOrAdmin, courseController.deleteCourse);
+
+// ✅ Authenticated User: Enroll in a course
+router.post('/:id/enroll', authenticateToken, courseController.enrollInCourse);
+
+// ✅ Authenticated User: Get user progress in a course
+router.get('/:id/progress', authenticateToken, courseController.getUserProgress);
+
+// ✅ Authenticated User: Add review to a course
+router.post('/:id/review', authenticateToken, courseController.addCourseReview);
+
+// 📦 Get modules of a course (optional auth: useful for previewing)
+router.get('/:id/modules', optionalAuth, courseController.getCourseModules);
+
+// ➕ Instructor/Admin: Add module to course
+router.post('/:id/modules', authenticateToken, requireInstructorOrAdmin, courseController.addModuleToCourse);
 
 export default router;

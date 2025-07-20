@@ -3,26 +3,27 @@ import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
 import { Request } from 'express';
 import fs from 'fs';
+import crypto from 'crypto'; // for better filename randomness
 
-
-const uploadDir = 'uploads/';
+// Ensure uploads directory exists
+const uploadDir = path.resolve(__dirname, '../../uploads');
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-
+// Configure storage
 const storage = multer.diskStorage({
-  destination: (req: any, file: Express.Multer.File, cb) => {
+  destination: (req, file, cb) => {
     cb(null, uploadDir);
   },
-  filename: (req: any, file: Express.Multer.File, cb) => {
+  filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    const uniqueName = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`;
     cb(null, uniqueName);
   }
 });
 
-
+// Filter file types
 const fileFilter = (
   req: Request,
   file: Express.Multer.File,
@@ -36,10 +37,9 @@ const fileFilter = (
   }
 };
 
+// Export configured multer instance
 export const upload = multer({
   storage,
   fileFilter,
-  limits: {
-    fileSize: 10 * 1024 * 1024 
-  }
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });

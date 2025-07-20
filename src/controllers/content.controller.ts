@@ -1,178 +1,95 @@
-import { Content } from "../models/content.model";
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from 'express';
+import * as contentService from '../services/content.service';
 
-export const createContent = async (req: Request, res: Response) => {
+// GET /api/content
+export const getAllContent = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // @ts-ignore: assume req.user is populated by auth middleware
-    const userId = req.user?._id;
-
-    const contentData = {
-      ...req.body,
-      author: userId
-    };
-
-    const newContent = new Content(contentData);
-    await newContent.save();
-
-    res.status(201).json({
-      message: "New content created successfully",
-      content: newContent
-    });
-  } catch (error: any) {
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({
-        message: 'Validation error',
-        details: error.errors
-      });
-    }
-    if (error.code === 11000) {
-      return res.status(400).json({
-        message: 'Duplicate field value',
-        details: error.keyValue
-      });
-    }
-    res.status(500).json({
-      message: 'Server error',
-      error: error.message
-    });
+    const filters = req.query;
+    const contents = await contentService.getAllContent(filters);
+    res.json({ total: contents.length, contents });
+  } catch (error) {
+    next(error);
   }
 };
 
-export const deleteContent = async (req: Request, res: Response) => {
+// GET /api/content/:slug
+export const getContentBySlug = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const slug = req.params.slug;
+    const content = await contentService.getContentBySlug(slug);
+    if (!content) {
+      return res.status(404).json({ message: 'Content not found' });
+    }
+    res.json(content);
+  } catch (error) {
+    next(error);
+  }
+};
 
-    const updated = await Content.findByIdAndUpdate(
-      id,
-      {
-        isDeleted: true,
-        status: 'archived',
-        updatedAt: Date.now()
-      },
-      { new: true }
-    );
+// POST /api/content
+export const createContent = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?._id;
+    const data = { ...req.body, author: userId };
+    const newContent = await contentService.createContent(data);
+    res.status(201).json(newContent);
+  } catch (error) {
+    next(error);
+  }
+};
 
+// PUT /api/content/:id
+export const updateContent = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const updated = await contentService.updateContent(req.params.id, req.body);
     if (!updated) {
       return res.status(404).json({ message: 'Content not found' });
     }
-
-    res.json({
-      message: 'Content soft-deleted successfully',
-      content: updated
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      message: 'Server error',
-      error: error.message
-    });
+    res.json(updated);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const getAllContent = async (req: Request, res: Response) => {
+// DELETE /api/content/:id
+export const deleteContent = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { status, type, author, courseId, accessLevel } = req.query;
-
-    // Build dynamic filter
-    const filter: any = {
-      isDeleted: false // Exclude deleted by default
-    };
-
-    if (status) filter.status = status;
-    if (type) filter.type = type;
-    if (author) filter.author = author;
-    if (courseId) filter.courseId = courseId;
-    if (accessLevel) filter.accessLevel = accessLevel;
-
-    const contents = await Content.find(filter)
-      .populate("author", "firstName lastName email role")
-      .sort({ createdAt: -1 });
-
-    res.json({ total: contents.length, contents });
-  } catch (error: any) {
-    res.status(500).json({
-      message: "Failed to fetch content",
-      error: error.message
-    });
-  }
-};
-//===================get-single-content====================
-export const getContentById = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    const content = await Content.findOne({ _id: id, isDeleted: false })
-      .populate("author", "firstName lastName email role")
-      .populate("courseId", "title")
-      .populate("moduleId", "title");
-
-    if (!content) {
-      return res.status(404).json({ message: "Content not found" });
+    const deleted = await contentService.deleteContent(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: 'Content not found' });
     }
-
-    res.json({ content });
-  } catch (error: any) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.json({ message: 'Content deleted successfully' });
+  } catch (error) {
+    next(error);
   }
 };
 
+// POST /api/content/upload (media upload)
+import { RequestHandler } from 'express';
+import { upload } from '../middlewares/upload.middleware';
 
-   
+export const uploadMedia: RequestHandler = (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+  // Return the uploaded file info (or save reference if you want)
+  res.status(201).json({
+    message: 'File uploaded successfully',
+    file: {
+      filename: req.file.filename,
+      path: req.file.path,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+    },
+  });
+};
 
-//=========================file upload for new contents=======================
-export const updateContent = async (req: Request, res: Response) => {
+// GET /api/content/media (media library)
+export const getMediaLibrary = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
-
-    const existingContent = await Content.findById(id);
-    if (!existingContent || existingContent.isDeleted) {
-      return res.status(404).json({ message: 'Content not found or deleted' });
-    }
-
-    const {
-      title,
-      slug,
-      type,
-      content,
-      accessLevel,
-      status,
-      tags,
-      courseId,
-      moduleId
-    } = req.body;
-
-    // Update base fields
-    existingContent.title = title ?? existingContent.title;
-    existingContent.slug = slug ?? existingContent.slug;
-    existingContent.type = type ?? existingContent.type;
-    existingContent.content = content ? JSON.parse(content) : existingContent.content;
-    existingContent.accessLevel = accessLevel ?? existingContent.accessLevel;
-    existingContent.status = status ?? existingContent.status;
-    existingContent.tags = tags ? JSON.parse(tags) : existingContent.tags;
-    existingContent.courseId = courseId ?? existingContent.courseId;
-    existingContent.moduleId = moduleId ?? existingContent.moduleId;
-    existingContent.updatedAt = new Date();
-
-    // Replace file if new one is uploaded
-    if (req.file) {
-      existingContent.metadata = {
-        ...existingContent.metadata,
-        fileUrl: useS3
-          ? (req.file as any).location
-          : `/uploads/${req.file.filename}`,
-        fileType: req.file.mimetype,
-        fileSize: req.file.size,
-        originalName: req.file.originalname
-      };
-    }
-
-    const updatedContent = await existingContent.save();
-
-    res.status(200).json({
-      message: 'Content updated successfully',
-      content: updatedContent
-    });
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    const mediaItems = await contentService.getMediaLibrary();
+    res.json({ total: mediaItems.length, media: mediaItems });
+  } catch (error) {
+    next(error);
   }
 };

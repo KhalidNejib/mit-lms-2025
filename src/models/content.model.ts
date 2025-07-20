@@ -32,7 +32,6 @@ const contentSchema = new Schema<IContent>(
       default: 'draft'
     },
     accessLevel: {
-  
       type: String,
       enum: ['public', 'enrolled', 'premium'],
       default: 'enrolled'
