@@ -109,6 +109,49 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
+export const resendVerificationEmail = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+
+    if (user.emailVerified) {
+      res.status(400).json({ success: false, message: 'Email is already verified' });
+      return;
+    }
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    user.emailVerificationToken = hashedToken;
+    user.emailVerificationExpires = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
+    await user.save();
+
+    const verifyURL = `${config.clientUrl}/verifyemail/${rawToken}`;
+    const emailHTML = `
+      <h2>Hi ${user.firstName},</h2>
+      <p>Please verify your email by clicking the link below:</p>
+      <a href="${verifyURL}" target="_blank">${verifyURL}</a>
+      <p>This link will expire in 1 hour.</p>
+    `;
+
+    await sendVerificationEmail({
+      to: user.email,
+      subject: 'Verify Your Email Address',
+      html: emailHTML,
+    });
+
+    res.json({ success: true, message: 'Verification email resent successfully' });
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 
 // Login user
 export const login = async (req: Request, res: Response): Promise<void> => {
