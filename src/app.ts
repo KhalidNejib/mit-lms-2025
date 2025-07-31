@@ -37,12 +37,9 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-<<<<<<< HEAD
-app.use('/', getAllCourses);
-app.use('/:id',getCourseById);
-=======
-app.use('/api/content',contentRoutes)
->>>>>>> content-endpoints
+app.use('/api/content', contentRoutes);
+app.get('/api/courses', getAllCourses);
+app.get('/api/courses/:id', getCourseById);
 
 // 404 handler
 app.use((req, res) => {
