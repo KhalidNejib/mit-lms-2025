@@ -93,7 +93,10 @@ export default {
     const course = await Course.findById(courseId);
     if (!course) throw new Error('Course not found');
 
-    course.modules.push(module._id);
+    if (!course.modules) {
+      course.modules = [];
+    }
+    course.modules.push(module._id as mongoose.Types.ObjectId);
     await course.save();
 
     return module;
