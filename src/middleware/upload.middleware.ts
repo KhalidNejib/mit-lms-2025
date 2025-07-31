@@ -1,27 +1,7 @@
-// middlewares/upload.middleware.ts
 import multer, { FileFilterCallback } from 'multer';
-import path from 'path';
 import { Request } from 'express';
-import fs from 'fs';
 
-
-const uploadDir = 'uploads/';
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
-
-
-const storage = multer.diskStorage({
-  destination: (req: any, file: Express.Multer.File, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req: any, file: Express.Multer.File, cb) => {
-    const ext = path.extname(file.originalname);
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, uniqueName);
-  }
-});
-
+const storage = multer.memoryStorage();
 
 const fileFilter = (
   req: Request,
@@ -39,7 +19,5 @@ const fileFilter = (
 export const upload = multer({
   storage,
   fileFilter,
-  limits: {
-    fileSize: 10 * 1024 * 1024 
-  }
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
 });

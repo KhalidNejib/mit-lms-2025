@@ -1,37 +1,25 @@
-import express from 'express';
-import {
-  createContent,
-  deleteContent,
- 
-  getAllContent,
-  getContentById,
-  updateContent,
-  getContentBySlug,
-  getMediaContent
- 
-} from '../controllers/content.controller';
-import {authenticateToken} from '../middleware/auth.middleware'
-import {upload} from '../middleware/upload.middleware'
+import { Router } from 'express';
+import * as contentController from '../controllers/content.controller';
+import { uploadFile } from '../controllers/upload.controllers';
+import { authenticateToken, requireInstructorOrAdmin } from '../middleware/auth.middleware';
+import { upload } from '../middleware/upload.middleware';
 
+const router = Router();
 
-const router = express.Router();
+// Content routes
+router.get('/', contentController.getAllContent);
+router.get('/:slug', contentController.getContentBySlug);
+router.post('/', authenticateToken, requireInstructorOrAdmin, contentController.createContent);
+router.put('/:id', authenticateToken, requireInstructorOrAdmin, contentController.updateContent);
+router.delete('/:id', authenticateToken, requireInstructorOrAdmin, contentController.deleteContent);
 
-
-router.post('/',authenticateToken, createContent);
-
-
-router.get('/', getAllContent);
-
-router.get('/:id', getContentById);
-
-router.get('/media', getMediaContent);
-
-router.get('/slug/:slug', getContentById);
-
-
-
-
-router.delete('/:id', authenticateToken,deleteContent);
-router.put('/:id', authenticateToken, upload.single('file'), updateContent);
+// Upload route (separate)
+router.post(
+  '/upload',
+  authenticateToken,
+  requireInstructorOrAdmin,
+  upload.single('file'),
+  uploadFile
+);
 
 export default router;

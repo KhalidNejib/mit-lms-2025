@@ -1,20 +1,26 @@
 import dotenv from 'dotenv';
 
-
 dotenv.config();
 
 interface Config {
+  EMAIL_PASS: string;
   port: number;
   nodeEnv: 'development' | 'production' | 'test';
   mongoUri: string;
+
   jwtSecret: string;
-  jwtRefreshSecret:string;
+  jwtRefreshSecret: string;
   jwtExpiresIn: string;
-  jwtRefreshExpiresIn:string;
+  jwtRefreshExpiresIn: string;
+
   frontendUrl: string;
-  emailUser:string;
-  emailPassword:string;
-  clientUrl:string;
+  clientUrl: string;
+
+  // Email / SMTP settings
+  emailHost: string;
+  emailPort: number;
+  emailUser: string;
+  emailPassword: string;
 }
 
 const required = [
@@ -26,9 +32,11 @@ const required = [
   'JWT_EXPIRES_IN',
   'JWT_REFRESH_EXPIRES_IN',
   'FRONTEND_URL',
+  'CLIENT_URL',
+  'EMAIL_HOST',
+  'EMAIL_PORT',
   'EMAIL_USER',
-  'EMAIL_PASSWORD',
-  'CLIENT_URL'
+  'EMAIL_PASS',
 ];
 
 required.forEach((key) => {
@@ -41,12 +49,18 @@ export const config: Config = {
   port: parseInt(process.env.PORT!, 10),
   nodeEnv: process.env.NODE_ENV! as 'development' | 'production' | 'test',
   mongoUri: process.env.MONGODB_URI!,
+
   jwtSecret: process.env.JWT_SECRET!,
-  jwtRefreshSecret:process.env.JWT_REFRESH_SECRETE!,
+  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET!,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN!,
-  jwtRefreshExpiresIn:process.env.JWT_REFRESH_EXPIRES_IN!,
+  jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN!,
+
   frontendUrl: process.env.FRONTEND_URL!,
-  emailUser:process.env.EMAIL_USER!,
-  emailPassword:process.env.EMAIL_PASSWORD!,
-  clientUrl:process.env.CLIENT_URL!,  
+  clientUrl: process.env.CLIENT_URL!,
+
+  emailHost: process.env.EMAIL_HOST!,
+  emailPort: parseInt(process.env.EMAIL_PORT!, 10),
+  emailUser: process.env.EMAIL_USER!,
+  emailPassword: process.env.EMAIL_PASS!,
+  EMAIL_PASS: ''
 };

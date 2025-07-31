@@ -10,12 +10,13 @@ import {
   logout,
   refreshToken,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  resendVerificationEmail
 } from '../controllers/auth.controllers';
 import { authenticateToken } from '../middleware/auth.middleware';
 import {registerSchema,
   loginSchema,
-  changePasswordSchema,} from "../utils/validator"
+  changePasswordSchema} from "../utils/validator"
 
   import { validateBody } from '../middleware/validator.middleware';
 const router = Router();
@@ -23,7 +24,8 @@ const router = Router();
 // Public routes
 router.post('/register', validateBody(registerSchema), register);  // → /api/auth/register
 router.get('/verifyemail/:token', verifyEmail)
-router.post('/login', validateBody(loginSchema), login);        // → /api/auth/login
+router.post('/login', validateBody(loginSchema), login);  
+router.post('/resend-verification', resendVerificationEmail);      // → /api/auth/login
 
 // Protected routes (require authentication)
 router.get('/me', authenticateToken, getCurrentUser);        // → /api/auth/me
