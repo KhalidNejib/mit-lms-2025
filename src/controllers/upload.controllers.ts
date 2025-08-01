@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { uploadToCloudinary } from '../services/upload.service';
-import { Content } from '../models/content.model';
+import  Course  from '../models/course.model';
 
 export const uploadFile = async (req: Request, res: Response) => {
   try {
@@ -24,7 +24,7 @@ export const uploadFile = async (req: Request, res: Response) => {
     }
 
     // Save metadata + Cloudinary URL to MongoDB
-    const newUpload = new Content({
+    const newUpload = new Course({
       title,
       slug,
       content,
@@ -48,4 +48,4 @@ export const uploadFile = async (req: Request, res: Response) => {
     console.error('Upload error:', error);
     res.status(500).json({ message: 'Upload failed', error });
   }
-};
+};    
