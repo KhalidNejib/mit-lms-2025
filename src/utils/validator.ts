@@ -52,7 +52,15 @@ export const registerSchema = Joi.object({
       'string.pattern.base': 'Password must contain at least one uppercase letter and one special character',
       'any.required': 'Password is required',
     }),
-  role: Joi.string().valid('student', 'instructor', 'admin', 'content_manager').optional()
+    role: Joi.string()
+    .valid('student', 'instructor', 'admin', 'content-manager')
+    .required()
+    .messages({ 'any.only': 'Role must be one of student, instructor, admin, or content-manager' }),
+  
+  terms: Joi.boolean()
+  .valid(true)
+  .required()
+  .messages({ 'any.only': 'You must accept the terms and conditions' }),
 });
 
 

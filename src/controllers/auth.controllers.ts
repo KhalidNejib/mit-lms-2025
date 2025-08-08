@@ -1,16 +1,21 @@
 import { Request, Response } from 'express';
 import { User, IUser} from '../models/user.model'
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
-import { forgotPasswordSchema, resetPasswordSchema } from '../utils/validator';
+import { forgotPasswordSchema, resetPasswordSchema, } from '../utils/validator';
 import { generateResetToken, validateResetToken } from '../services/passwordReset.service';
 import { sendPasswordResetEmail, sendVerificationEmail } from '../services/email.service';
+
 import crypto from "crypto"
 
-import{config } from "../config/enviroment"
+
+import {config } from "../config/enviroment"
 
 // Register new user
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('✅ Register controller reached');
+    console.log('📦 Incoming Body:', req.body);
+
     const { email, password, firstName, lastName, role } = req.body;
 
     const existingUser = await User.findOne({ email });
@@ -71,7 +76,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-//verify email 
 export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
   try {
     const { token } = req.params;
@@ -85,11 +89,23 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
 
     const user = await User.findOne({
       emailVerificationToken: hashedToken,
-      emailVerificationExpires: { $gt: new Date() },
     });
 
     if (!user) {
       res.status(400).json({ success: false, message: 'Invalid or expired verification token' });
+      return;
+    }
+
+    if (user.emailVerified) {
+      res.status(200).json({
+        success: true,
+        message: 'Email already verified. You can now log in.',
+      });
+      return;
+    }
+
+    if (user.emailVerificationExpires && user.emailVerificationExpires < new Date()) {
+      res.status(400).json({ success: false, message: 'Verification token has expired' });
       return;
     }
 
@@ -99,7 +115,7 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
 
     await user.save();
 
-    res.json({
+    res.status(200).json({
       success: true,
       message: 'Email verified successfully. You can now log in.',
     });
@@ -350,8 +366,8 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const { token, newPassword } = req.body;
-    const success = await validateResetToken(token, newPassword);
+    const { token, newPassword, confirmPassword } = req.body;
+    const success = await validateResetToken(token, newPassword, confirmPassword );
 
     if (!success) {
       res.status(400).json({
